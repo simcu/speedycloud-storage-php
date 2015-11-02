@@ -32,15 +32,16 @@ class Actor extends Auth
     /**
      * create new object
      * @param $remote remote file name
-     * @param $local local file path
+     * @param $content local file content
      * @return \SimpleXMLElement
      */
-    public function newObject($remote, $local)
+    public function newObject($remote, $content)
     {
-        $http_uri = '/' . $this->bucket . $remote;
+        $http_uri = '/' . $this->bucket . '/' . $remote;
         $http_method = 'PUT';
         $headers = $this->createHeaders($http_method, '', 'application/x-www-form-urlencoded', '', '', $http_uri);
-        $data = $this->query($http_method, $http_uri, $headers, file_get_contents($local));
+        $data = $this->query($http_method, $http_uri, $headers, false, $content);
+        var_dump($data);
         if (substr($data['header'], 9, 3) == '200') {
             return true;
         } else {
