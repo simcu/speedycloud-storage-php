@@ -63,7 +63,6 @@ class Auth
             $signstr .= $params . PHP_EOL;
         }
         $signstr .= $uri;
-        var_dump($signstr);
         return [
             'date' => $date,
             'sign' => base64_encode(hash_hmac("sha1", $signstr, $this->secret_key, true))

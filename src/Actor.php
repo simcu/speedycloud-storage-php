@@ -15,34 +15,104 @@ class Actor extends Auth
     public function getObjects()
     {
         $http_method = 'GET';
-        $http_url = $this->gate_url . '/' . $this->bucket;
-        $headers = $this->createHeaders($http_method, '', '', '', '', '/' . $this->bucket);
-        $data = $this->query($http_method, $http_url, $headers);
-        return $data;
+        $http_uri = '/' . $this->bucket;
+        $headers = $this->createHeaders($http_method, '', '', '', '', $http_uri);
+        $data = $this->query($http_method, $http_uri, $headers);
+        if (substr($data['header'], 9, 3) == '200') {
+            return [
+                'max' => $data['body']['MaxKeys'],
+                'total' => count($data['body']['Contents']),
+                'list' => $data['body']['Contents']
+            ];
+        } else {
+            return false;
+        }
     }
 
+    /**
+     * create new object
+     * @param $remote remote file name
+     * @param $local local file path
+     * @return \SimpleXMLElement
+     */
     public function newObject($remote, $local)
     {
+        $http_uri = '/' . $this->bucket . $remote;
         $http_method = 'PUT';
-        $http_url = $http_url = $this->gate_url . '/' . $this->bucket . $remote;
-        $headers = $this->createHeaders($http_method, md5_file($local), 'application/x-www-form-urlencoded', '', '', '/'.$this->bucket . $remote);
-        $data = $this->query($http_method,$http_url,$headers,file_get_contents($local));
-        return $data;
+        $headers = $this->createHeaders($http_method, '', 'application/x-www-form-urlencoded', '', '', $http_uri);
+        $data = $this->query($http_method, $http_uri, $headers, file_get_contents($local));
+        if (substr($data['header'], 9, 3) == '200') {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    private function query($method, $url, $headers, $data='')
+    /**
+     * delete the object
+     * @param $name object name
+     * @return bool
+     */
+    public function delObject($name)
+    {
+        $http_uri = '/' . $this->bucket . $name;
+        $http_method = 'DELETE';
+        $headers = $this->createHeaders($http_method, '', '', '', '', $http_uri);
+        $data = $this->query($http_method, $http_uri, $headers);
+        return true;
+    }
+
+    /**
+     * get the object
+     * @param $name object name
+     * @return bool|string file content
+     */
+    public function getObject($name)
+    {
+        $http_uri = '/' . $this->bucket . $name;
+        $http_method = 'GET';
+        $headers = $this->createHeaders($http_method, '', '', '', '', $http_uri);
+        $data = $this->query($http_method, $http_uri, $headers, false);
+        if (substr($data['header'], 9, 3) == '200') {
+            return $data['body'];
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * curl query action
+     * @param $method
+     * @param $url
+     * @param $headers
+     * @param string $data
+     * @return \SimpleXMLElement
+     */
+    private function query($method, $url, $headers, $xml = true, $data = '')
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $this->gate_url . $url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        if(!empty($data)){
+        if (!empty($data)) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            $headers[] = "Content-Length: ".strlen($data);
+            $headers[] = "Content-Length: " . strlen($data);
         }
-        var_dump($headers);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
         $return = curl_exec($ch);
         curl_close($ch);
-        return $return;
+        $return = explode("\r\n\r\n", $return, 2);
+        if ($xml) {
+            return [
+                'header' => $return[0],
+                'body' => isset($return[1]) ? json_decode(json_encode(simplexml_load_string($return[1])), true) : []
+            ];
+        } else {
+            return [
+                'header' => $return[0],
+                'body' => $return[1]
+            ];
+        }
     }
 }
