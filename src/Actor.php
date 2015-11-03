@@ -41,7 +41,25 @@ class Actor extends Auth
         $http_method = 'PUT';
         $headers = $this->createHeaders($http_method, '', 'application/x-www-form-urlencoded', '', '', $http_uri);
         $data = $this->query($http_method, $http_uri, $headers, false, $content);
-        var_dump($data);
+        if (substr($data['header'], 9, 3) == '200' || substr($data['header'], 9, 3) == '100') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * set object acl
+     * @param $name object name
+     * @param string $acl Allowed: "private", "public-read", "public-read-write", "authenticated-read"
+     * @return bool
+     */
+    public function aclObject($name, $acl = 'public-read')
+    {
+        $http_uri = '/' . $this->bucket . '/' . $name . "?acl";
+        $http_method = 'PUT';
+        $headers = $this->createHeaders($http_method, '', 'application/x-www-form-urlencoded', $acl, '', $http_uri);
+        $data = $this->query($http_method, $http_uri, $headers);
         if (substr($data['header'], 9, 3) == '200') {
             return true;
         } else {

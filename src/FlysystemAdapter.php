@@ -35,6 +35,7 @@ class FlysystemAdapter implements AdapterInterface
     public function write($path, $contents, Config $config)
     {
         $data = $this->auth->newObject($path, $contents);
+        $this->auth->aclObject($path);
         return $data;
     }
 
@@ -49,7 +50,9 @@ class FlysystemAdapter implements AdapterInterface
      */
     public function writeStream($path, $resource, Config $config)
     {
-        return true;
+        $data = $this->auth->newObject($path, $resource);
+        $this->auth->aclObject($path);
+        return $data;
     }
 
     /**
@@ -64,6 +67,7 @@ class FlysystemAdapter implements AdapterInterface
     public function update($path, $contents, Config $config)
     {
         $data = $this->auth->newObject($path, $contents);
+        $this->auth->aclObject($path);
         return $data;
     }
 
@@ -78,7 +82,9 @@ class FlysystemAdapter implements AdapterInterface
      */
     public function updateStream($path, $resource, Config $config)
     {
-        return true;
+        $data = $this->auth->newObject($path, $resource);
+        $this->auth->aclObject($path);
+        return $data;
     }
 
     /**
@@ -93,7 +99,8 @@ class FlysystemAdapter implements AdapterInterface
     {
         $data = $this->auth->getObject($path);
         $this->auth->delObject($path);
-        return $this->auth->newObject($newpath, $data);
+        $this->auth->newObject($newpath, $data);
+        return $this->auth->aclObject($newpath);
     }
 
     /**
@@ -195,7 +202,7 @@ class FlysystemAdapter implements AdapterInterface
      */
     public function readStream($path)
     {
-        return true;
+        return $this->auth->getObject($path);
     }
 
     /**

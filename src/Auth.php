@@ -57,7 +57,7 @@ class Auth
         }
         $signstr .= $date . PHP_EOL;
         if (!empty($amz_headers)) {
-            $signstr .= $amz_headers . PHP_EOL;
+            $signstr .= "x-amz-acl:".$amz_headers . PHP_EOL;
         }
         if (!empty($params)) {
             $signstr .= $params . PHP_EOL;
@@ -96,8 +96,11 @@ class Auth
             'Date: ' . $cs['date'],
             'Authorization: AWS ' . $this->access_key . ":" . $cs['sign']
         ];
-        if(!empty($type)){
-            $headers[] = "Content-Type: ".$type;
+        if (!empty($type)) {
+            $headers[] = "Content-Type: " . $type;
+        }
+        if (!empty($amz_headers)) {
+            $headers[] = "x-amz-acl: " . $amz_headers;
         }
         return $headers;
     }
